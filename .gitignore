@@ -1,0 +1,4 @@
+*.iml
+*.DS_Store
+target/
+gen-external-apklibs/

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">io.divide.client-sample</string>
+    <string name="accountType">com.example.client_sample</string>
+    <string name="devUrl">http://williams-mbp:8888/api</string>
+    <string name="prodUrl">http://authenticator-test.appspot.com/api</string>
+</resources>
