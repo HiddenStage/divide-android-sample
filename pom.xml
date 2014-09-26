@@ -8,7 +8,6 @@
         <groupId>io.divide</groupId>
         <artifactId>parent</artifactId>
         <version>0.5.2</version>
-        <relativePath>../../../pom.xml</relativePath>
     </parent>
     <artifactId>client-sample</artifactId>
     <packaging>apk</packaging>
