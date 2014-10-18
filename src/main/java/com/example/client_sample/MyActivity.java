@@ -19,7 +19,6 @@ package com.example.client_sample;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -34,15 +33,12 @@ import io.divide.client.BackendUser;
 import io.divide.client.android.AuthActivity;
 import io.divide.client.android.mock.DivideDrawer;
 import io.divide.client.auth.LoginListener;
-import io.divide.shared.file.Storage;
-import io.divide.shared.file.XmlStorage;
 import io.divide.shared.transitory.TransientObject;
 import io.divide.shared.transitory.query.OPERAND;
 import io.divide.shared.transitory.query.Query;
 import io.divide.shared.transitory.query.QueryBuilder;
 import rx.functions.Action1;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -50,9 +46,8 @@ import java.util.List;
 public class MyActivity extends Activity {
 
     private Logger logger = Logger.getLogger(MyActivity.class);
-    private MyApplication app;
     private List<BackendObject> objectList = new ArrayList<BackendObject>();
-    private BackendObjectAdaper adapter;
+    private BackendObjectAdapter adapter;
     private BackendUser user;
 
     @InjectView(R.id.cachedUserTV)         TextView savedUserTV;
@@ -63,25 +58,20 @@ public class MyActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         DivideDrawer.attach(this, R.layout.main);
-//        setContentView(R.layout.main);
         ButterKnife.inject(this);
-        getActionBar().setHomeButtonEnabled(true);
-
-//        au = AuthUtils.get(this, AuthManager.ACCOUNT_TYPE); TODO replace this
-        app = (MyApplication) this.getApplication();
 
         BackendServices.addLoginListener(new LoginListener(){
-
             @Override
             public void onNext(BackendUser user) {
-            System.out.println("loginListener: setUser: " + user);
-            if(user != null){
-                setUser(user);
-            }
+                System.out.println("loginListener: setUser: " + user);
+                if(user != null){
+                    setUser(user);
+                    getObjects();
+                }
             }
         });
 
-        adapter = new BackendObjectAdaper(this,objectList);
+        adapter = new BackendObjectAdapter(this,objectList);
         usersLV.setAdapter(adapter);
         usersLV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -103,24 +93,8 @@ public class MyActivity extends Activity {
                         });
 
                 BackendServices.local().delete(o);
-        }});
+            }});
 
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if(BackendUser.getUser() != null)
-                    getObjects();
-                else
-                    logger.debug("Not signed in, not querying data.");
-            }
-        },1000);
-
-        Storage s = new XmlStorage(new File(this.getFilesDir() + File.separator + "something.xml"),Storage.MODE_WORLD_WRITEABLE);
-        String id = "something";
-        System.out.println("Stored: " + s.getString(id,""));
-        System.out.println("Stored: " + s.contains(id));
-        s.edit().putString(id,"something2").commit();
-        s.edit().putInt("int",55).commit();
     }
 
     @Override
@@ -132,6 +106,8 @@ public class MyActivity extends Activity {
     @OnClick(R.id.loginButton)
     public void login(){
         Intent intent = new Intent(MyActivity.this, AuthActivity.class);
+        intent.putExtra(AuthActivity.EXTRA_ENABLE_ANONYMOUS_LOGIN,true);
+
         MyActivity.this.startActivity(intent);
     }
 
@@ -140,18 +116,23 @@ public class MyActivity extends Activity {
         BackendUser.logout();
         savedUserTV.setText("Cached User: ");
         loggedInUserTV.setText("User: ");
+        objectList.clear();
+        adapter.notifyDataSetInvalidated();
     }
 
     @OnClick(R.id.addObject)
     public void addObject(){
         if(user != null){
+            BackendObject object = new BackendObject();
+            object.put("score",System.currentTimeMillis()+"");
+            object.put("user", user.getUsername());
             BackendServices
                     .remote()
-                    .save(new BackendObject())
+                    .save(object)
                     .subscribe(new Action1<Void>() {
                         @Override
                         public void call(Void s) {
-                            getObjects();
+                            getObjects(); //refresh list
                         }
                     });
         }
@@ -167,28 +148,23 @@ public class MyActivity extends Activity {
         BackendServices.remote()
                 .query(BackendObject.class, q)
                 .subscribe(new Action1<Collection<BackendObject>>() {
-                               @Override
-                               public void call(Collection<BackendObject> objects) {
-                                   objectList.clear();
-                                   objectList.addAll(objects);
-                                   adapter.notifyDataSetChanged();
-
-//                                   BackendServices.local().save((BackendObject[]) objects.toArray());
-//                                   List<BackendObject> col = BackendServices.local().query(q);
-//                                   for (BackendObject o : col) logger.debug(o);
-                               }
-                           }, new Action1<Throwable>() {
-                               @Override
-                               public void call(Throwable throwable) {
-                                   logger.debug("",throwable);
-                               }
-                           });
+                    @Override
+                    public void call(Collection<BackendObject> objects) {
+                        objectList.clear();
+                        objectList.addAll(objects);
+                        adapter.notifyDataSetInvalidated();
+                    }
+                }, new Action1<Throwable>() {
+                    @Override
+                    public void call(Throwable throwable) {
+                        logger.debug("", throwable);
+                    }
+                });
     }
 
     private void setUser(BackendUser user){
         if(user!=null){
-//            savedUserTV.setText("Cached User: " + getSavedUser(au)); TODO replace this
-            loggedInUserTV.setText("User: " + user);
+            loggedInUserTV.setText("User: " + user.getEmailAddress());
             this.user = user;
         }
     }

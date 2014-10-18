@@ -22,7 +22,6 @@ import android.widget.Toast;
 import com.jug6ernaut.android.logging.ALogger;
 import com.jug6ernaut.android.logging.Logger;
 import io.divide.client.Backend;
-import io.divide.client.android.AndroidBackend;
 import io.divide.client.android.mock.AndroidDebugConfig;
 import io.divide.client.android.push.PushEvent;
 import io.divide.client.android.push.PushListener;
@@ -37,8 +36,7 @@ public class MyApplication extends Application {
         ALogger.init(this, "Backend", true);
         logger = Logger.getLogger(MyApplication.class);
 
-        AndroidBackend b = Backend.init(new AndroidDebugConfig(this,getProdUrl(),getDevUrl()));
-//        BackendServices.addPushListener(listener);
+        Backend.init(new AndroidDebugConfig(this,getProdUrl(),getDevUrl()));
     }
 
     @Override

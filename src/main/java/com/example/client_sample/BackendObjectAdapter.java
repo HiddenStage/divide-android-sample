@@ -29,14 +29,14 @@ import io.divide.client.BackendObject;
 
 import java.util.List;
 
-public class BackendObjectAdaper extends BaseAdapter {
+public class BackendObjectAdapter extends BaseAdapter {
 
-    Logger logger = Logger.getLogger(BackendObjectAdaper.class);
+    Logger logger = Logger.getLogger(BackendObjectAdapter.class);
 
     LayoutInflater inflater;
     List<BackendObject> users;
 
-    public BackendObjectAdaper(Context context, List<BackendObject> users){
+    public BackendObjectAdapter(Context context, List<BackendObject> users){
         this.inflater = LayoutInflater.from(context);
         this.users = users;
     }
@@ -69,8 +69,8 @@ public class BackendObjectAdaper extends BaseAdapter {
             convertView.setTag(holder);
         }
 
-        holder.name.setText("Key: " + user.getObjectKey());
-        holder.id.setText("Owner: " + user.getOwnerId());
+        holder.name.setText("User: " + user.get(String.class, "user"));
+        holder.id.setText("Score: " + user.get(String.class, "score"));
 
         return convertView;
     }
